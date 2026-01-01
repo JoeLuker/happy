@@ -240,6 +240,76 @@ The custom header supports all standard React Navigation header options plus:
 
 This ensures consistent header appearance and behavior across iOS, Android, and web platforms.
 
+## Server Configuration
+
+The app supports connecting to custom Happy Server instances for development or self-hosted deployments.
+
+### Server Configuration Methods
+
+The server URL is determined in the following priority order:
+
+1. **Custom Server via UI** (highest priority)
+   - Navigate to Settings → Server Configuration screen (`/server` route)
+   - Enter a custom server URL (must be HTTP or HTTPS)
+   - The app validates the server by checking for "Welcome to Happy Server!" response
+   - Custom URL is persisted in MMKV storage (survives app restarts and logouts)
+
+2. **Environment Variable**
+   - Set `EXPO_PUBLIC_HAPPY_SERVER_URL` before building the app
+   - Useful for development builds or custom distributions
+
+3. **Default Server** (fallback)
+   - `https://api.cluster-fluster.com`
+   - Used when no custom configuration is set
+
+### Server Configuration UI
+
+The server configuration screen (`sources/app/(app)/server.tsx`) provides:
+
+- **Custom URL Input**: Enter and validate server URLs
+- **Server Validation**: Automatically tests connection and verifies it's a Happy Server instance
+- **Reset to Default**: Clear custom configuration and return to default server
+- **Status Display**: Shows whether a custom server is currently in use
+
+### Server Validation
+
+When setting a custom server, the app performs validation:
+
+1. **URL Format Check**: Ensures valid URL with HTTP/HTTPS protocol
+2. **Connection Test**: Attempts to reach the server with a GET request
+3. **Server Identity**: Verifies response contains "Welcome to Happy Server!" text
+4. **User Confirmation**: Requires explicit confirmation before switching servers
+
+### Implementation Details
+
+- **Persistence**: Custom server URLs are stored in a separate MMKV instance (`server-config`) that persists across logouts
+- **Configuration Module**: `sources/sync/serverConfig.ts` provides:
+  - `getServerUrl()`: Get current server URL
+  - `setServerUrl(url)`: Set or clear custom server
+  - `isUsingCustomServer()`: Check if using custom server
+  - `getServerInfo()`: Get hostname, port, and custom status
+  - `validateServerUrl(url)`: Validate URL format
+
+### Development Usage
+
+For local development against a different server:
+
+```bash
+# Method 1: Environment variable (requires rebuild)
+export EXPO_PUBLIC_HAPPY_SERVER_URL=http://localhost:3000
+yarn start
+
+# Method 2: Use the in-app Server Configuration screen
+# Settings → Server Configuration → Enter URL → Save
+```
+
+### Security Considerations
+
+- Only HTTP and HTTPS protocols are supported
+- Server validation helps prevent misconfiguration
+- Users receive destructive confirmation dialogs before changing servers
+- Custom server setting persists but can be reset at any time
+
 ## Unistyles Styling Guide
 
 ### Creating Styles
